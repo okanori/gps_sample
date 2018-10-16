@@ -1,0 +1,145 @@
+#:import MapView kivy.garden.mapview.MapView
+
+TabbedPanel:
+    do_default_tab: False
+    map_view: map_view
+    name_input_text: name_input.text
+    male_check_status: male_check.state
+    female_check_status: female_check.state
+    japanese_check_status: japanese_check.active
+    english_check_status: english_check.active
+    chinese_check_status: chinese_check.active
+    korean_check_status: korean_check.active
+    comment_input_text: comment_input.text
+    TabbedPanelItem:
+        text: 'main'
+        BoxLayout:
+            orientation: "vertical"
+
+            # GridLayout:
+            #     size_hint: (1, 0.1)
+            #     cols: 4
+            #     Label:  
+            #         size_hint: (0.15, 1)
+            #         text: "latitude"
+            #     Label:
+            #         size_hint: (0.35, 1)
+            #         text: app.latitude
+            #     Label:
+            #         size_hint: (0.15, 1)
+            #         text: "longitude"
+            #     Label:
+            #         size_hint: (0.35, 1)
+            #         text: app.longitude
+            GridLayout:
+                size_hint: (1, 0.9)
+                cols: 1
+                # Label:
+                #     text: "map"
+                MapView:
+                    id: map_view
+                    lat: app.lat
+                    lon: app.lon
+                    zoom: 12
+                
+            GridLayout:
+                size_hint: (1, 0.1)
+                cols: 3
+                Button:
+                    text: 'MARK'
+                    on_release: app.put_marker()
+                    
+                Button:
+                    text: 'UPDATE'
+                    on_release: app.rest_update()
+                    
+                Button:
+                    text: 'CLEAR'
+                    on_release: app.set_status()
+
+            GridLayout:
+                size_hint: (1, 0.1)
+                cols: 1
+                TextInput:
+                    id: label_status
+                    text: app.gps_status
+            #     ToggleButton:
+            #         text: 'Start' if self.state == 'normal' else 'Stop'
+            #         on_state:
+            #             app.start(5000, 0) if self.state == 'down' else \
+            #             app.stop()
+
+    TabbedPanelItem:
+        text: 'setting'
+        # Label:
+        #     text_size: self.size
+        #     halign: 'center'
+        #     valign: 'center'
+        #     text: "under construction"
+        BoxLayout:
+            orientation: "vertical"
+            BoxLayout:
+                size_hint: (1, 0.8)
+                orientation: "horizontal"
+                GridLayout:
+                    size_hint: (0.2, 1)
+                    cols: 1
+                    Label:
+                        text: 'name'
+                    Label:
+                        text: 'gender'
+                    Label:
+                        text: 'language'
+                    Label:
+                        text: 'comment'
+                GridLayout:
+                    size_hint: (0.8, 1)
+                    cols: 1
+                    TextInput:
+                        id: name_input
+                        text: app.name_input_text
+                    GridLayout:
+                        cols: 2
+                        ToggleButton:
+                            id: male_check
+                            text: "Male"
+                            group: "gender"
+                            state: app.male_check_status
+                        ToggleButton:
+                            id: female_check
+                            text: "Female"
+                            group: "gender"
+                            state: app.female_check_status
+
+                    GridLayout:
+                        cols: 8
+                        Image:
+                            source: 'flag093.png'
+                        CheckBox:
+                            id: japanese_check
+                            active: app.japanese_check_status
+                        Image:
+                            source: 'flag198.png'
+                        CheckBox:
+                            id: english_check
+                            active: app.english_check_status
+                        Image:
+                            source: 'flag039.png'
+                        CheckBox:
+                            id: chinese_check
+                            active: app.chinese_check_status
+                        Image:
+                            source: 'flag099.png'
+                        CheckBox:
+                            id: korean_check
+                            active: app.korean_check_status
+                    TextInput:
+                        id: comment_input
+                        text: app.comment_input_text
+            BoxLayout:
+                size_hint: (1, 0.2)
+                oriental: "vertical"
+                Button:
+                    text: "REGISTER"
+                    on_release: app.rest_update()
+                    # on_release: app.name_print()
