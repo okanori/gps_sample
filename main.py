@@ -9,7 +9,6 @@ import uuid
 
 from kivy.app import App
 from kivy.clock import Clock, mainthread
-# from kivy.core.text import LabelBase, DEFAULT_FONT
 from kivy.garden.mapview import MapMarkerPopup, MapView
 from kivy.lang import Builder
 from kivy.network.urlrequest import UrlRequest
@@ -17,6 +16,8 @@ from kivy.properties import (BooleanProperty, NumericProperty, ObjectProperty,
                              StringProperty)
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from kivy.uix.textinput import TextInput
 from plyer import gps
 
 from mapview.clustered_marker_layer import ClusteredMarkerLayer
@@ -26,15 +27,13 @@ from PIL import Image, ImageDraw, ImageFont
 
 # kivy.require('1.10.1')
 
-# LabelBase.register(DEFAULT_FONT, os.path.join(
-#     os.path.dirname(os.path.abspath(__file__)), "FreeMono.ttf"))
+REST_URL = 'https://morning-plateau-62909.herokuapp.com/api/positions/'
+REST_HEADER = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
 class GpsApp(App):
-    # UUID = str(uuid.uuid3(uuid.NAMESPACE_DNS, str(uuid.getnode())))
     ID_FILE = "id.txt"
     AP_DIR = os.path.dirname(os.path.abspath(__file__))
     CARD = os.path.join(AP_DIR, 'comment.png')
-    # FONT = ImageFont.truetype(os.path.join(AP_DIR, "NotoMono-Regular.ttf"), 12)
     try:
         FONT = ImageFont.truetype("/system/fonts/Roboto-Regular.ttf", 12)
     except IOError:
@@ -48,7 +47,6 @@ class GpsApp(App):
 
     latitude = StringProperty()
     longitude = StringProperty()
-    # map_view = ObjectProperty(MapView)
 
     lat = NumericProperty()
     lon = NumericProperty()
@@ -63,12 +61,21 @@ class GpsApp(App):
     chinese_check_status = BooleanProperty(False)
     korean_check_status = BooleanProperty(False)
 
+    male_search_status = StringProperty('normal')
+    female_search_status = StringProperty('normal')
+    japanese_search_status = BooleanProperty(True)
+    english_search_status = BooleanProperty(True)
+    chinese_search_status = BooleanProperty(True)
+    korean_search_status = BooleanProperty(True)
+    update_interval = NumericProperty(60)
+    update_interval_label = StringProperty('60')
+
     my_marker = None
     get_result = None
     layer = None
 
     def build(self):
-        self.rest_get()
+        self.title = "VSA"
         id_file_path = os.path.join(self.AP_DIR, self.ID_FILE)
         if os.path.isfile(id_file_path):
             with open(id_file_path, 'r') as f:
@@ -85,13 +92,18 @@ class GpsApp(App):
             import traceback
             traceback.print_exc()
             self.gps_status = 'GPS is not implemented for your platform'
-        self.start()
+            self.lat = 35.653437
+            self.lon = 139.762607
+            Clock.schedule_once(self.my_callback, 1)
+            self.interval_callback = Clock.schedule_interval(self.my_callback, self.update_interval)
+        self.start(minTime=self.update_interval * 1000)
 
+        self.rest_get()
         for p in self.get_result:
             if self.UUID == p['uuid']:
                print('match! name -> {}'.format(p['name']))
                self.name_input_text = p['name']
-               self.male_ckeck_status = 'down' if p['male_status'] == True else 'normal'
+               self.male_check_status = 'down' if p['male_status'] == True else 'normal'
                self.female_check_status = 'down' if p['female_status'] == True else 'normal'
                self.japanese_check_status = p['japanese_status']
                self.english_check_status = p['english_status']
@@ -101,14 +113,20 @@ class GpsApp(App):
 
         return Builder.load_file('gps.kv')
 
-    def start(self, minTime=1000, minDistance=0):
+    def my_callback(self, dt):
+        self.put_marker()
+
+    def start(self, minTime=10000, minDistance=0):
         try:
             gps.start(minTime, minDistance)
         except NotImplementedError:
             self.gps_status = 'GPS is not implemented for your platform'
 
     def stop(self):
-        gps.stop()
+        try:
+            gps.stop()
+        except NotImplementedError:
+            self.gps_status = 'GPS is not implemented for your platform'
 
     @mainthread
     def on_location(self, **kwargs):
@@ -117,12 +135,6 @@ class GpsApp(App):
 
         self.lon = float('{:.6f}'.format(kwargs['lon']))
         self.lat = float('{:.6f}'.format(kwargs['lat']))
-        # self.root.map_view.center_on(self.lat, self.lon)
-        # if self.my_marker is not None:
-        #     self.root.map_view.remove_marker(self.my_marker)
-        # self.my_marker = MapMarkerPopup(lon=self.lon, lat=self.lat)
-        # self.root.map_view.add_marker(self.my_marker)
-        # self.gps_status = 'lat: {}, lon: {}'.format(self.latitude, self.longitude)
 
     @mainthread
     def on_status(self, stype, status):
@@ -135,37 +147,11 @@ class GpsApp(App):
     def on_resume(self):
         gps.start(1000, 0)
 
-    # *** lat lon driver ***
-    # def get_gps_latitude(self):
-    #     self.lat = round(random.uniform(35.000000, 39.000000), 6)
-    #     self.latitude = str(self.lat)
-    #     return self.latitude # rounding
-
-    # def get_gps_longitude(self):
-    #     self.lon = round(random.uniform(135.000000, 139.000000), 6)
-    #     self.longitude = str(self.lon)
-    #     return self.longitude
-
-    # def update(self, _):
-    #     self.latitude = self.get_gps_latitude()
-    #     self.longitude = self.get_gps_longitude()
-
-    #     # print(f"lat={self.lat} lon={self.lon}")
-    #     self.root.map_view.center_on(self.lat, self.lon)
-    #     if self.my_marker is not None:
-    #         self.root.map_view.remove_marker(self.my_marker)
-    #     self.my_marker = MapMarkerPopup(lon=self.lon, lat=self.lat)
-    #     self.root.map_view.add_marker(self.my_marker)
-        
-    # def on_start(self):
-    #     Clock.schedule_interval(self.update, 5)
-
     # REST_API
     def rest_success(self, req, result):
         print('success')
 
     def rest_fail(self, req, result):
-        print(result)
         print('fail')
 
     def rest_error(self, req, result):
@@ -173,38 +159,18 @@ class GpsApp(App):
 
     def rest_progress(self, req, result, chunk):
         print('loading')
-        # self.set_status('loading')
 
     def rest_get(self):
-        # values = {'name':'hoge',}
-        # converted data to json type
-        # params = json.dumps(values)
 
-        headers = {'Content-type': 'application/json',
-                'Accept': 'application/json'}
-
-        req = UrlRequest('https://morning-plateau-62909.herokuapp.com/api/positions/',
+        req = UrlRequest(REST_URL,
                         on_success=self.rest_success, on_failure=self.rest_fail,
                         on_error=self.rest_error, on_progress=self.rest_progress,
-                        req_headers=headers, method='GET', timeout=30)
+                        req_headers=REST_HEADER, method='GET', timeout=30)
         req.wait()
 
         print(req.result)
 
         self.get_result = req.result
-
-        # layer = ClusteredMarkerLayer()
-        # for p in req.result:
-        #     lon = float(p['longitude'])
-        #     lat = float(p['latitude'])
-        #     layer.add_marker(lon=lon, lat=lat, cls=MyMapMarker)
-
-        # layer.add_marker(lat=self.lat, lon=self.lon)
-
-        # self.root.map_view.add_widget(layer)
-        # self.root.map_view.center_on(self.lat, self.lon)
-        # self.set_status(str(req.result))
-
 
     def rest_post(self):
         print('post')
@@ -223,13 +189,10 @@ class GpsApp(App):
 
         params = json.dumps(values)
 
-        headers = {'Content-type': 'application/json',
-                'Accept': 'application/json'}
-
-        req = UrlRequest('https://morning-plateau-62909.herokuapp.com/api/positions/',
+        req = UrlRequest(REST_URL,
                         on_success=self.rest_success, on_failure=self.rest_fail,
                         on_error=self.rest_error, on_progress=self.rest_progress,
-                        req_headers=headers, req_body=params, method='POST', timeout=30)
+                        req_headers=REST_HEADER, req_body=params, method='POST', timeout=30)
         req.wait()
 
         print(req.result)
@@ -253,13 +216,10 @@ class GpsApp(App):
 
         params = json.dumps(values)
 
-        headers = {'Content-type': 'application/json',
-                'Accept': 'application/json'}
-
-        req = UrlRequest('https://morning-plateau-62909.herokuapp.com/api/positions/{}/'.format(self.UUID),
+        req = UrlRequest('{}{}/'.format(REST_URL, self.UUID),
                         on_success=self.rest_success, on_failure=self.rest_fail,
                         on_error=self.rest_error, on_progress=self.rest_progress,
-                        req_headers=headers, req_body=params, method='PUT', timeout=30)
+                        req_headers=REST_HEADER, req_body=params, method='PUT', timeout=30)
         req.wait()
 
         print(req.result)
@@ -268,6 +228,16 @@ class GpsApp(App):
     def put_marker(self):
         [os.remove(f) for f in glob.glob('tmp_*.png')]
         self.rest_get()
+        search_set = set()
+        if self.root.japanese_search_status:
+            search_set.add('J')
+        if self.root.english_search_status:
+            search_set.add('E')
+        if self.root.chinese_search_status:
+            search_set.add('C')
+        if self.root.korean_search_status:
+            search_set.add('K')
+        
         if self.layer is not None:
             self.root.map_view.remove_layer(self.layer)
         self.layer = ClusteredMarkerLayer()
@@ -275,6 +245,25 @@ class GpsApp(App):
             lon = float(p['longitude'])
             lat = float(p['latitude'])
             if not p['uuid'] == self.UUID:
+                if self.root.male_search_status == 'down':
+                    if not p['male_status'] == True:
+                        continue
+                if self.root.female_search_status == 'down':
+                    if not p['female_status'] == True:
+                        continue
+                target_set = set()
+                if p['japanese_status']:
+                    target_set.add('J')
+                if p['english_status']:
+                    target_set.add('E')
+                if p['chinese_status']:
+                    target_set.add('C')
+                if p['korean_status']:
+                    target_set.add('K')
+                print(i, search_set, target_set)
+                if len(search_set & target_set) == 0:
+                    continue
+
                 tmp_img = self.CARD_IMG.copy()
                 if p['japanese_status']:
                     tmp_img.paste(self.JPN_IMG, (4, 5))
@@ -286,33 +275,45 @@ class GpsApp(App):
                     tmp_img.paste(self.KOR_IMG, (58, 5))
 
                 draw = ImageDraw.Draw(tmp_img)
-                # comment = p['comment'] if len(p['comment']) < 11 else p['comment'][:10] + "\n" + p['comment'][10:]
-                # draw.text((4, 17), '{}\n{}'.format(p['name'], comment),
-                #           fill=(0, 0, 0), font=self.FONT)
                 draw.text((4, 17), p['name'], fill=(0, 0, 0), font=self.FONT)
                 draw.text((4, 29), p['comment'][:10], fill=(0, 0, 0), font=self.FONT)
                 draw.text((4, 41), p['comment'][10:], fill=(0, 0, 0), font=self.FONT)
                 tmp_png = os.path.join(self.AP_DIR, "tmp_{}.png".format(i))
                 tmp_img.save(tmp_png)
 
-                # self.layer.add_marker(lon=lon, lat=lat, cls=MyMapMarker)
                 cls = type("MyMapMarker_{}".format(i), (MapMarker,), {"source": tmp_png})
                 self.layer.add_marker(lon=lon, lat=lat, cls=cls)
 
         self.layer.add_marker(lat=self.lat, lon=self.lon)
 
         self.root.map_view.add_widget(self.layer)
+        self.root.map_view.trigger_update(True)
+
+    def current_place(self):
         self.root.map_view.center_on(self.lat, self.lon)
+
+    def name_check(self):
+        if not self.root.name_input_text:
+            popup = Popup(title='WARN',
+                        content=Label(text='name must input'),
+                        size_hint=(None, None), size=(400, 400))
+
+            popup.open()
+        else:
+            self.rest_update()
 
     def rest_update(self):
         # self.rest_get()
-        for p in self.get_result:
-            if p['uuid'] == self.UUID:
-                self.rest_put()
-                break
-        else:
-            self.rest_post()
-       
+        if self.root.name_input_text:
+            if not self.root.comment_input_text:
+                self.root.comment_input_text = "None"
+            for p in self.get_result:
+                if p['uuid'] == self.UUID:
+                    self.rest_put()
+                    break
+            else:
+                self.rest_post()
+    
     def set_status(self, s=''):
         self.gps_status = s
     
@@ -323,14 +324,32 @@ class GpsApp(App):
                 self.root.female_check_status,
                 self.root.japanese_check_status))
 
+    def change_interval(self):
+        try:
+            gps.stop()
+            gps.start(minTime=self.update_interval * 1000)
+        except NotImplementedError:
+            self.gps_status = 'GPS is not implemented for your platform'
+            print('exception interval -> {}'.format(self.root.interval_slider.value))
+            self.interval_callback.cancel()
+            Clock.schedule_once(self.my_callback, 0)
+            self.interval_callback = Clock.schedule_interval(self.my_callback,
+                                                             self.root.interval_slider.value)
+
+    def switch_main_tab(self):
+        self.root.switch_to(self.root.tab_list[len(self.root.tab_list) - 1])
+
 
 class MyMapMarker(MapMarker):
     source = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), 'blue_marker.png')
 
-# class MyMapMarker(MapMarker):
-#     def __init__(self, source=os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), 'blue_marker.png'),
-#                  *args, **kwargs):
-#         super().__init__(source, *args, **kwargs)
+
+class MyTextInput(TextInput):
+    max_charactors = NumericProperty(0)
+    def insert_text(self, substring, from_undo=False):
+        if len(self.text) > (self.max_characters - 1) and self.max_characters > 0:
+            substring = ""
+        TextInput.insert_text(self, substring, from_undo)
 
 
 if __name__ == '__main__':

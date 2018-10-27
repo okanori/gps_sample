@@ -4,6 +4,15 @@ TabbedPanel:
     do_default_tab: False
     map_view: map_view
     name_input_text: name_input.text
+
+    male_search_status: male_search.state
+    female_search_status: female_search.state
+    japanese_search_status: japanese_search.active
+    english_search_status: english_search.active
+    chinese_search_status: chinese_search.active
+    korean_search_status: korean_search.active
+    interval_slider: interval_slider
+
     male_check_status: male_check.state
     female_check_status: female_check.state
     japanese_check_status: japanese_check.active
@@ -16,26 +25,9 @@ TabbedPanel:
         BoxLayout:
             orientation: "vertical"
 
-            # GridLayout:
-            #     size_hint: (1, 0.1)
-            #     cols: 4
-            #     Label:  
-            #         size_hint: (0.15, 1)
-            #         text: "latitude"
-            #     Label:
-            #         size_hint: (0.35, 1)
-            #         text: app.latitude
-            #     Label:
-            #         size_hint: (0.15, 1)
-            #         text: "longitude"
-            #     Label:
-            #         size_hint: (0.35, 1)
-            #         text: app.longitude
             GridLayout:
                 size_hint: (1, 0.9)
                 cols: 1
-                # Label:
-                #     text: "map"
                 MapView:
                     id: map_view
                     lat: app.lat
@@ -44,33 +36,102 @@ TabbedPanel:
                 
             GridLayout:
                 size_hint: (1, 0.1)
-                cols: 3
-                Button:
-                    text: 'MARK'
-                    on_release: app.put_marker()
-                    
-                Button:
-                    text: 'UPDATE'
-                    on_release: app.rest_update()
-                    
-                Button:
-                    text: 'CLEAR'
-                    on_release: app.set_status()
-
-            GridLayout:
-                size_hint: (1, 0.1)
                 cols: 1
-                TextInput:
-                    id: label_status
-                    text: app.gps_status
-            #     ToggleButton:
-            #         text: 'Start' if self.state == 'normal' else 'Stop'
-            #         on_state:
-            #             app.start(5000, 0) if self.state == 'down' else \
-            #             app.stop()
+                Button:
+                    text: 'CURRENT PLACE'
+                    on_release: app.current_place()
+                    
+            # GridLayout:
+            #     size_hint: (1, 0.1)
+            #     cols: 3
+            #     Button:
+            #         text: 'MARK'
+            #         on_release: app.put_marker()
+                    
+            #     Button:
+            #         text: 'UPDATE'
+            #         on_release: app.rest_update()
+                    
+            #     Button:
+            #         text: 'CLEAR'
+            #         on_release: app.set_status()
 
     TabbedPanelItem:
-        text: 'setting'
+        text: 'search'
+        BoxLayout:
+            orientation: "vertical"
+            BoxLayout:
+                size_hint: (1, 0.9)
+                orientation: "horizontal"
+                GridLayout:
+                    size_hint: (0.2, 1)
+                    cols: 1
+                    Label:
+                        text: 'gender'
+                    Label:
+                        text: 'language'
+                    Label:
+                        text: 'update\ninterval(sec)'
+                GridLayout:
+                    size_hint: (0.8, 1)
+                    cols: 1
+                    GridLayout:
+                        cols: 2
+                        ToggleButton:
+                            id: male_search
+                            text: "Male"
+                            group: "gender"
+                            state: app.male_search_status
+                        ToggleButton:
+                            id: female_search
+                            text: "Female"
+                            group: "gender"
+                            state: app.female_search_status
+
+                    GridLayout:
+                        cols: 8
+                        CheckBox:
+                            id: japanese_search
+                            active: app.japanese_search_status
+                        Image:
+                            source: 'flag093.png'
+                        CheckBox:
+                            id: english_search
+                            active: app.english_search_status
+                        Image:
+                            source: 'flag198.png'
+                        CheckBox:
+                            id: chinese_search
+                            active: app.chinese_search_status
+                        Image:
+                            source: 'flag039.png'
+                        CheckBox:
+                            id: korean_search
+                            active: app.korean_search_status
+                        Image:
+                            source: 'flag099.png'
+                    GridLayout:
+                        cols: 2
+                        Slider:
+                            id: interval_slider
+                            min: 30
+                            max: 180
+                            value: app.update_interval
+                            step: 10
+                            on_touch_move: app.update_interval_label = str(self.value)
+                        Label:
+                            size: (50, 1)
+                            size_hint: (None, 1)
+                            text: app.update_interval_label
+                            on_text: interval_slider.value = int(self.text)
+            Button:
+                size_hint: (1, 0.1)
+                text: 'update'
+                on_release: app.change_interval()
+                on_release: app.switch_main_tab()
+
+    TabbedPanelItem:
+        text: 'register'
         # Label:
         #     text_size: self.size
         #     halign: 'center'
@@ -79,7 +140,7 @@ TabbedPanel:
         BoxLayout:
             orientation: "vertical"
             BoxLayout:
-                size_hint: (1, 0.8)
+                size_hint: (1, 0.9)
                 orientation: "horizontal"
                 GridLayout:
                     size_hint: (0.2, 1)
@@ -95,7 +156,9 @@ TabbedPanel:
                 GridLayout:
                     size_hint: (0.8, 1)
                     cols: 1
-                    TextInput:
+                    MyTextInput:
+                        max_characters: 10
+                        multiline: False
                         id: name_input
                         text: app.name_input_text
                     GridLayout:
@@ -113,33 +176,36 @@ TabbedPanel:
 
                     GridLayout:
                         cols: 8
-                        Image:
-                            source: 'flag093.png'
                         CheckBox:
                             id: japanese_check
                             active: app.japanese_check_status
                         Image:
-                            source: 'flag198.png'
+                            source: 'flag093.png'
                         CheckBox:
                             id: english_check
                             active: app.english_check_status
                         Image:
-                            source: 'flag039.png'
+                            source: 'flag198.png'
                         CheckBox:
                             id: chinese_check
                             active: app.chinese_check_status
                         Image:
-                            source: 'flag099.png'
+                            source: 'flag039.png'
                         CheckBox:
                             id: korean_check
                             active: app.korean_check_status
-                    TextInput:
+                        Image:
+                            source: 'flag099.png'
+                    MyTextInput:
+                        max_characters: 20
+                        multiline: False
                         id: comment_input
                         text: app.comment_input_text
             BoxLayout:
-                size_hint: (1, 0.2)
+                size_hint: (1, 0.1)
                 oriental: "vertical"
                 Button:
                     text: "REGISTER"
-                    on_release: app.rest_update()
+                    on_release: app.name_check()
+                    # on_release: app.rest_update()
                     # on_release: app.name_print()
