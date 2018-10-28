@@ -54,6 +54,8 @@ class GpsApp(App):
     gps_status = StringProperty('booting')
     name_input_text = StringProperty('')
     comment_input_text = StringProperty('')
+    let_help_check_status = StringProperty('normal')
+    need_help_check_status = StringProperty('down')
     male_check_status = StringProperty('normal')
     female_check_status = StringProperty('normal')
     japanese_check_status = BooleanProperty(False)
@@ -102,6 +104,12 @@ class GpsApp(App):
         for p in self.get_result:
             if self.UUID == p['uuid']:
                print('match! name -> {}'.format(p['name']))
+               if p['need_help'] == True:
+                   self.let_help_check_status = 'normal'
+                   self.need_help_check_status = 'down'
+               else:
+                   self.let_help_check_status = 'down'
+                   self.need_help_check_status = 'normal'
                self.name_input_text = p['name']
                self.male_check_status = 'down' if p['male_status'] == True else 'normal'
                self.female_check_status = 'down' if p['female_status'] == True else 'normal'
@@ -110,11 +118,15 @@ class GpsApp(App):
                self.chinese_check_status = p['chinese_status']
                self.korean_check_status = p['korean_status']
                self.comment_input_text = p['comment']
+               break
+        else:
+            self.name_input_text = self.UUID[:8]
 
         return Builder.load_file('gps.kv')
 
     def my_callback(self, dt):
-        self.put_marker()
+        # self.put_marker()
+        self.name_check()
 
     def start(self, minTime=10000, minDistance=0):
         try:
@@ -135,6 +147,7 @@ class GpsApp(App):
 
         self.lon = float('{:.6f}'.format(kwargs['lon']))
         self.lat = float('{:.6f}'.format(kwargs['lat']))
+        self.name_check()
 
     @mainthread
     def on_status(self, stype, status):
@@ -145,7 +158,7 @@ class GpsApp(App):
         return True
 
     def on_resume(self):
-        gps.start(1000, 0)
+        gps.start(self.update_interval, 0)
 
     # REST_API
     def rest_success(self, req, result):
@@ -175,6 +188,7 @@ class GpsApp(App):
     def rest_post(self):
         print('post')
         values = {'uuid': self.UUID,
+                  'need_help': False if self.root.need_help_check_status == 'normal' else True,
                   'name': self.root.name_input_text,
                   'latitude': self.lat,
                   'longitude': self.lon,
@@ -202,6 +216,7 @@ class GpsApp(App):
     def rest_put(self):
         print('put')
         values = {'uuid': self.UUID,
+                  'need_help': False if self.root.need_help_check_status == 'normal' else True,
                   'name': self.root.name_input_text,
                   'latitude': self.lat,
                   'longitude': self.lon,
@@ -227,6 +242,7 @@ class GpsApp(App):
 
     def put_marker(self):
         [os.remove(f) for f in glob.glob('tmp_*.png')]
+        help_flg = True if self.root.need_help_check_status == 'down' else False
         self.rest_get()
         search_set = set()
         if self.root.japanese_search_status:
@@ -244,7 +260,7 @@ class GpsApp(App):
         for i, p in enumerate(self.get_result):
             lon = float(p['longitude'])
             lat = float(p['latitude'])
-            if not p['uuid'] == self.UUID:
+            if (help_flg == p['need_help']) and (not self.UUID == p['uuid']):
                 if self.root.male_search_status == 'down':
                     if not p['male_status'] == True:
                         continue
@@ -301,6 +317,8 @@ class GpsApp(App):
             popup.open()
         else:
             self.rest_update()
+            self.put_marker()
+            self.switch_map_tab()
 
     def rest_update(self):
         # self.rest_get()
@@ -336,8 +354,8 @@ class GpsApp(App):
             self.interval_callback = Clock.schedule_interval(self.my_callback,
                                                              self.root.interval_slider.value)
 
-    def switch_main_tab(self):
-        self.root.switch_to(self.root.tab_list[len(self.root.tab_list) - 1])
+    def switch_map_tab(self):
+        self.root.switch_to(self.root.tab_list[len(self.root.tab_list) - 2])
 
 
 class MyMapMarker(MapMarker):
