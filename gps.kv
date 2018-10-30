@@ -76,12 +76,12 @@ TabbedPanel:
                         cols: 2
                         ToggleButton:
                             id: male_check
-                            text: "Male"
+                            text: "male"
                             group: "gender"
                             state: app.male_check_status
                         ToggleButton:
                             id: female_check
-                            text: "Female"
+                            text: "female"
                             group: "gender"
                             state: app.female_check_status
 
@@ -132,6 +132,8 @@ TabbedPanel:
                 Button:
                     text: "REGISTER"
                     on_release: app.name_check()
+                    on_release: app.switch_map_tab()
+                    on_release: app.current_place()
                     # on_release: app.rest_update()
                     # on_release: app.name_print()
 
@@ -241,6 +243,6 @@ TabbedPanel:
                             on_text: interval_slider.value = int(self.text)
             Button:
                 size_hint: (1, 0.1)
-                text: 'update'
+                text: 'UPDATE'
                 on_release: app.change_interval()
                 on_release: app.switch_map_tab()

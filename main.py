@@ -260,7 +260,7 @@ class GpsApp(App):
         for i, p in enumerate(self.get_result):
             lon = float(p['longitude'])
             lat = float(p['latitude'])
-            if (help_flg == p['need_help']) and (not self.UUID == p['uuid']):
+            if (not help_flg == p['need_help']) and (not self.UUID == p['uuid']):
                 if self.root.male_search_status == 'down':
                     if not p['male_status'] == True:
                         continue
@@ -318,7 +318,6 @@ class GpsApp(App):
         else:
             self.rest_update()
             self.put_marker()
-            self.switch_map_tab()
 
     def rest_update(self):
         # self.rest_get()
