@@ -13,6 +13,7 @@ TabbedPanel:
     korean_search_status: korean_search.active
     interval_slider: interval_slider
 
+    need_help_check_status: need_help_check.state
     male_check_status: male_check.state
     female_check_status: female_check.state
     japanese_check_status: japanese_check.active
@@ -20,8 +21,124 @@ TabbedPanel:
     chinese_check_status: chinese_check.active
     korean_check_status: korean_check.active
     comment_input_text: comment_input.text
+
+    register_tab: register_tab
     TabbedPanelItem:
-        text: 'main'
+        id: register_tab
+        text: 'my info'
+        # Label:
+        #     text_size: self.size
+        #     halign: 'center'
+        #     valign: 'center'
+        #     text: "under construction"
+        BoxLayout:
+            orientation: "vertical"
+            BoxLayout:
+                size_hint: (1, 0.9)
+                orientation: "horizontal"
+                GridLayout:
+                    size_hint: (0.2, 1)
+                    cols: 1
+                    Label:
+                        text: 'mode'
+                    Label:
+                        text: 'name'
+                    Label:
+                        text: 'gender'
+                    Label:
+                        text: 'language'
+                    Label:
+                        text: 'comment'
+                    Label:
+                        text: 'update\ninterval(sec)'
+                GridLayout:
+                    size_hint: (0.8, 1)
+                    cols: 1
+                    GridLayout:
+                        cols: 2
+                        ToggleButton:
+                            id: let_help_check
+                            text: "help you"
+                            group: "mode"
+                            state: app.let_help_check_status
+                        ToggleButton:
+                            id: need_help_check
+                            text: "help me"
+                            group: "mode"
+                            state: app.need_help_check_status
+
+                    MyTextInput:
+                        max_characters: 10
+                        multiline: False
+                        id: name_input
+                        text: app.name_input_text
+                    GridLayout:
+                        cols: 2
+                        ToggleButton:
+                            id: male_check
+                            text: "male"
+                            group: "gender"
+                            state: app.male_check_status
+                        ToggleButton:
+                            id: female_check
+                            text: "female"
+                            group: "gender"
+                            state: app.female_check_status
+
+                    GridLayout:
+                        cols: 8
+                        CheckBox:
+                            id: japanese_check
+                            active: app.japanese_check_status
+                        Image:
+                            source: 'flag093.png'
+                        CheckBox:
+                            id: english_check
+                            active: app.english_check_status
+                        Image:
+                            source: 'flag198.png'
+                        CheckBox:
+                            id: chinese_check
+                            active: app.chinese_check_status
+                        Image:
+                            source: 'flag039.png'
+                        CheckBox:
+                            id: korean_check
+                            active: app.korean_check_status
+                        Image:
+                            source: 'flag099.png'
+                    MyTextInput:
+                        max_characters: 20
+                        multiline: False
+                        id: comment_input
+                        text: app.comment_input_text
+                    GridLayout:
+                        cols: 2
+                        Slider:
+                            id: interval_slider
+                            min: 30
+                            max: 180
+                            value: app.update_interval
+                            step: 10
+                            on_touch_move: app.update_interval_label = str(self.value)
+                        Label:
+                            size: (50, 1)
+                            size_hint: (None, 1)
+                            text: app.update_interval_label
+                            on_text: interval_slider.value = int(self.text)
+            BoxLayout:
+                size_hint: (1, 0.1)
+                oriental: "vertical"
+                Button:
+                    text: "REGISTER"
+                    on_release: app.name_check()
+                    on_release: app.switch_map_tab()
+                    on_release: app.current_place()
+                    # on_release: app.rest_update()
+                    # on_release: app.name_print()
+
+    TabbedPanelItem:
+        text: 'map'
         BoxLayout:
             orientation: "vertical"
 
@@ -126,86 +243,6 @@ TabbedPanel:
                             on_text: interval_slider.value = int(self.text)
             Button:
                 size_hint: (1, 0.1)
-                text: 'update'
+                text: 'UPDATE'
                 on_release: app.change_interval()
-                on_release: app.switch_main_tab()
-
-    TabbedPanelItem:
-        text: 'register'
-        # Label:
-        #     text_size: self.size
-        #     halign: 'center'
-        #     valign: 'center'
-        #     text: "under construction"
-        BoxLayout:
-            orientation: "vertical"
-            BoxLayout:
-                size_hint: (1, 0.9)
-                orientation: "horizontal"
-                GridLayout:
-                    size_hint: (0.2, 1)
-                    cols: 1
-                    Label:
-                        text: 'name'
-                    Label:
-                        text: 'gender'
-                    Label:
-                        text: 'language'
-                    Label:
-                        text: 'comment'
-                GridLayout:
-                    size_hint: (0.8, 1)
-                    cols: 1
-                    MyTextInput:
-                        max_characters: 10
-                        multiline: False
-                        id: name_input
-                        text: app.name_input_text
-                    GridLayout:
-                        cols: 2
-                        ToggleButton:
-                            id: male_check
-                            text: "Male"
-                            group: "gender"
-                            state: app.male_check_status
-                        ToggleButton:
-                            id: female_check
-                            text: "Female"
-                            group: "gender"
-                            state: app.female_check_status
-
-                    GridLayout:
-                        cols: 8
-                        CheckBox:
-                            id: japanese_check
-                            active: app.japanese_check_status
-                        Image:
-                            source: 'flag093.png'
-                        CheckBox:
-                            id: english_check
-                            active: app.english_check_status
-                        Image:
-                            source: 'flag198.png'
-                        CheckBox:
-                            id: chinese_check
-                            active: app.chinese_check_status
-                        Image:
-                            source: 'flag039.png'
-                        CheckBox:
-                            id: korean_check
-                            active: app.korean_check_status
-                        Image:
-                            source: 'flag099.png'
-                    MyTextInput:
-                        max_characters: 20
-                        multiline: False
-                        id: comment_input
-                        text: app.comment_input_text
-            BoxLayout:
-                size_hint: (1, 0.1)
-                oriental: "vertical"
-                Button:
-                    text: "REGISTER"
-                    on_release: app.name_check()
-                    # on_release: app.rest_update()
-                    # on_release: app.name_print()
+                on_release: app.switch_map_tab()
