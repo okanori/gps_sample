@@ -17,13 +17,13 @@ from kivy.properties import (BooleanProperty, NumericProperty, ObjectProperty,
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
+from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.uix.textinput import TextInput
+from PIL import Image, ImageDraw, ImageFont
 from plyer import gps
 
 from mapview.clustered_marker_layer import ClusteredMarkerLayer
 from mapview.view import MapMarker
-
-from PIL import Image, ImageDraw, ImageFont
 
 # kivy.require('1.10.1')
 
@@ -31,6 +31,12 @@ REST_URL = 'https://morning-plateau-62909.herokuapp.com/api/positions/'
 REST_HEADER = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
 class GpsApp(App):
+    def __init__(self, **kwargs):
+        super(GpsApp, self).__init__(**kwargs)
+        self.title = 'VSA'    # ウィンドウの名前を変更
+
+
+class MyTabbedPanel(TabbedPanel):
     ID_FILE = "id.txt"
     AP_DIR = os.path.dirname(os.path.abspath(__file__))
     CARD = os.path.join(AP_DIR, 'comment.png')
@@ -52,33 +58,42 @@ class GpsApp(App):
     lon = NumericProperty()
 
     gps_status = StringProperty('booting')
-    name_input_text = StringProperty('')
-    comment_input_text = StringProperty('')
-    let_help_check_status = StringProperty('normal')
-    need_help_check_status = StringProperty('down')
-    male_check_status = StringProperty('normal')
-    female_check_status = StringProperty('normal')
-    japanese_check_status = BooleanProperty(False)
-    english_check_status = BooleanProperty(False)
-    chinese_check_status = BooleanProperty(False)
-    korean_check_status = BooleanProperty(False)
+    name_input = ObjectProperty()
+    comment_input = ObjectProperty()
+    let_help_check = ObjectProperty()
+    need_help_check = ObjectProperty()
+    male_check = ObjectProperty()
+    female_check = ObjectProperty()
+    japanese_check = ObjectProperty()
+    english_check = ObjectProperty()
+    chinese_check = ObjectProperty()
+    korean_check = ObjectProperty()
 
-    male_search_status = StringProperty('normal')
-    female_search_status = StringProperty('normal')
-    japanese_search_status = BooleanProperty(True)
-    english_search_status = BooleanProperty(True)
-    chinese_search_status = BooleanProperty(True)
-    korean_search_status = BooleanProperty(True)
-    update_interval = NumericProperty(60)
-    update_interval_label = StringProperty('60')
+    male_search = ObjectProperty()
+    female_search = ObjectProperty()
+    japanese_search = ObjectProperty()
+    english_search = ObjectProperty()
+    chinese_search = ObjectProperty()
+    korean_search = ObjectProperty()
+    interval_slider = ObjectProperty()
+    interval_label_text = StringProperty("60")
+    # update_interval = NumericProperty(60)
+    # update_interval_label = StringProperty('60')
 
     my_marker = None
     get_result = None
     layer = None
 
-    def build(self):
-        self.title = "VSA"
+    def __init__(self, **kwargs):
+        super(MyTabbedPanel, self).__init__(**kwargs)
         id_file_path = os.path.join(self.AP_DIR, self.ID_FILE)
+
+        self.interval_slider.value = 60
+        self.japanese_search.active = True
+        self.english_search.active = True
+        self.chinese_search.active = True
+        self.korean_search.active = True
+
         if os.path.isfile(id_file_path):
             with open(id_file_path, 'r') as f:
                 self.UUID = f.read()
@@ -86,7 +101,6 @@ class GpsApp(App):
             self.UUID = str(uuid.uuid4())
             with open(id_file_path, 'w') as f:
                 f.write(self.UUID)
-
         try:
             gps.configure(on_location=self.on_location,
                           on_status=self.on_status)
@@ -97,32 +111,30 @@ class GpsApp(App):
             self.lat = 35.653437
             self.lon = 139.762607
             Clock.schedule_once(self.my_callback, 1)
-            self.interval_callback = Clock.schedule_interval(self.my_callback, self.update_interval)
-        self.start(minTime=self.update_interval * 1000)
+            self.interval_callback = Clock.schedule_interval(self.my_callback, self.interval_slider.value)
+        self.start(minTime=self.interval_slider.value * 1000)
 
         self.rest_get()
         for p in self.get_result:
             if self.UUID == p['uuid']:
                print('match! name -> {}'.format(p['name']))
                if p['need_help'] == True:
-                   self.let_help_check_status = 'normal'
-                   self.need_help_check_status = 'down'
+                   self.let_help_check.state = 'normal'
+                   self.need_help_check.state = 'down'
                else:
-                   self.let_help_check_status = 'down'
-                   self.need_help_check_status = 'normal'
-               self.name_input_text = p['name']
-               self.male_check_status = 'down' if p['male_status'] == True else 'normal'
-               self.female_check_status = 'down' if p['female_status'] == True else 'normal'
-               self.japanese_check_status = p['japanese_status']
-               self.english_check_status = p['english_status']
-               self.chinese_check_status = p['chinese_status']
-               self.korean_check_status = p['korean_status']
-               self.comment_input_text = p['comment']
+                   self.let_help_check.state = 'down'
+                   self.need_help_check.state = 'normal'
+               self.name_input.text = p['name']
+               self.male_check.state = 'down' if p['male_status'] == True else 'normal'
+               self.female_check.state = 'down' if p['female_status'] == True else 'normal'
+               self.japanese_check.active = p['japanese_status']
+               self.english_check.active = p['english_status']
+               self.chinese_check.active = p['chinese_status']
+               self.korean_check.active = p['korean_status']
+               self.comment_input.text = p['comment']
                break
         else:
-            self.name_input_text = self.UUID[:8]
-
-        return Builder.load_file('gps.kv')
+            self.name_input.text = self.UUID[:8]
 
     def my_callback(self, dt):
         # self.put_marker()
@@ -158,7 +170,7 @@ class GpsApp(App):
         return True
 
     def on_resume(self):
-        gps.start(self.update_interval, 0)
+        gps.start(self.interval_slider.value, 0)
 
     # REST_API
     def rest_success(self, req, result):
@@ -188,17 +200,17 @@ class GpsApp(App):
     def rest_post(self):
         print('post')
         values = {'uuid': self.UUID,
-                  'need_help': False if self.root.need_help_check_status == 'normal' else True,
-                  'name': self.root.name_input_text,
+                  'need_help': False if self.need_help_check.state == 'normal' else True,
+                  'name': self.name_input.text,
                   'latitude': self.lat,
                   'longitude': self.lon,
-                  'male_status': False if self.root.male_check_status == 'normal' else True,
-                  'female_status': False if self.root.female_check_status == 'normal' else True,
-                  'japanese_status': self.root.japanese_check_status,
-                  'english_status': self.root.english_check_status,
-                  'chinese_status': self.root.chinese_check_status,
-                  'korean_status': self.root.korean_check_status,
-                  'comment': self.root.comment_input_text,
+                  'male_status': False if self.male_check.state == 'normal' else True,
+                  'female_status': False if self.female_check.state == 'normal' else True,
+                  'japanese_status': self.japanese_check.active,
+                  'english_status': self.english_check.active,
+                  'chinese_status': self.chinese_check.active,
+                  'korean_status': self.korean_check.active,
+                  'comment': self.comment_input.text,
                   'update': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
         params = json.dumps(values)
@@ -216,17 +228,17 @@ class GpsApp(App):
     def rest_put(self):
         print('put')
         values = {'uuid': self.UUID,
-                  'need_help': False if self.root.need_help_check_status == 'normal' else True,
-                  'name': self.root.name_input_text,
+                  'need_help': False if self.need_help_check.state == 'normal' else True,
+                  'name': self.name_input.text,
                   'latitude': self.lat,
                   'longitude': self.lon,
-                  'male_status': False if self.root.male_check_status == 'normal' else True,
-                  'female_status': False if self.root.female_check_status == 'normal' else True,
-                  'japanese_status': self.root.japanese_check_status,
-                  'english_status': self.root.english_check_status,
-                  'chinese_status': self.root.chinese_check_status,
-                  'korean_status': self.root.korean_check_status,
-                  'comment': self.root.comment_input_text,
+                  'male_status': False if self.male_check.state == 'normal' else True,
+                  'female_status': False if self.female_check.state == 'normal' else True,
+                  'japanese_status': self.japanese_check.active,
+                  'english_status': self.english_check.active,
+                  'chinese_status': self.chinese_check.active,
+                  'korean_status': self.korean_check.active,
+                  'comment': self.comment_input.text,
                   'update': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
         params = json.dumps(values)
@@ -242,29 +254,29 @@ class GpsApp(App):
 
     def put_marker(self):
         [os.remove(f) for f in glob.glob('tmp_*.png')]
-        help_flg = True if self.root.need_help_check_status == 'down' else False
+        help_flg = True if self.need_help_check.state == 'down' else False
         self.rest_get()
         search_set = set()
-        if self.root.japanese_search_status:
+        if self.japanese_search.active:
             search_set.add('J')
-        if self.root.english_search_status:
+        if self.english_search.active:
             search_set.add('E')
-        if self.root.chinese_search_status:
+        if self.chinese_search.active:
             search_set.add('C')
-        if self.root.korean_search_status:
+        if self.korean_search.active:
             search_set.add('K')
         
         if self.layer is not None:
-            self.root.map_view.remove_layer(self.layer)
+            self.map_view.remove_layer(self.layer)
         self.layer = ClusteredMarkerLayer()
         for i, p in enumerate(self.get_result):
             lon = float(p['longitude'])
             lat = float(p['latitude'])
             if (not help_flg == p['need_help']) and (not self.UUID == p['uuid']):
-                if self.root.male_search_status == 'down':
+                if self.male_search.state == 'down':
                     if not p['male_status'] == True:
                         continue
-                if self.root.female_search_status == 'down':
+                if self.female_search.state == 'down':
                     if not p['female_status'] == True:
                         continue
                 target_set = set()
@@ -302,14 +314,14 @@ class GpsApp(App):
 
         self.layer.add_marker(lat=self.lat, lon=self.lon)
 
-        self.root.map_view.add_widget(self.layer)
-        self.root.map_view.trigger_update(True)
+        self.map_view.add_widget(self.layer)
+        self.map_view.trigger_update(True)
 
     def current_place(self):
-        self.root.map_view.center_on(self.lat, self.lon)
+        self.map_view.center_on(self.lat, self.lon)
 
     def name_check(self):
-        if not self.root.name_input_text:
+        if not self.name_input.text:
             popup = Popup(title='WARN',
                         content=Label(text='name must input'),
                         size_hint=(None, None), size=(400, 400))
@@ -321,9 +333,9 @@ class GpsApp(App):
 
     def rest_update(self):
         # self.rest_get()
-        if self.root.name_input_text:
-            if not self.root.comment_input_text:
-                self.root.comment_input_text = "None"
+        if self.name_input.text:
+            if not self.comment_input.text:
+                self.comment_input.text = "None"
             for p in self.get_result:
                 if p['uuid'] == self.UUID:
                     self.rest_put()
@@ -336,25 +348,25 @@ class GpsApp(App):
     
     def name_print(self):
         print('text: {}, male_status: {}, female_status: {}, japanese: {}'
-            .format(self.root.name_input_text,
-                self.root.male_check_status,
-                self.root.female_check_status,
-                self.root.japanese_check_status))
+            .format(self.name_input.text,
+                self.male_check.state,
+                self.female_check.state,
+                self.japanese_check.active))
 
     def change_interval(self):
         try:
             gps.stop()
-            gps.start(minTime=self.update_interval * 1000)
+            gps.start(minTime=self.interval_slider * 1000)
         except NotImplementedError:
             self.gps_status = 'GPS is not implemented for your platform'
-            print('exception interval -> {}'.format(self.root.interval_slider.value))
+            print('exception interval -> {}'.format(self.interval_slider.value))
             self.interval_callback.cancel()
             Clock.schedule_once(self.my_callback, 0)
             self.interval_callback = Clock.schedule_interval(self.my_callback,
-                                                             self.root.interval_slider.value)
+                                                             self.interval_slider.value)
 
     def switch_map_tab(self):
-        self.root.switch_to(self.root.tab_list[len(self.root.tab_list) - 2])
+        self.switch_to(self.tab_list[len(self.tab_list) - 2])
 
 
 class MyMapMarker(MapMarker):

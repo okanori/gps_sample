@@ -1,26 +1,30 @@
 #:import MapView kivy.garden.mapview.MapView
 
-TabbedPanel:
+MyTabbedPanel:
+
+<MyTabbedPanel>:
     do_default_tab: False
     map_view: map_view
-    name_input_text: name_input.text
+    name_input: name_input
+    let_help_check: let_help_check
+    need_help_check: need_help_check
 
-    male_search_status: male_search.state
-    female_search_status: female_search.state
-    japanese_search_status: japanese_search.active
-    english_search_status: english_search.active
-    chinese_search_status: chinese_search.active
-    korean_search_status: korean_search.active
+    male_search: male_search
+    female_search: female_search
+    japanese_search: japanese_search
+    english_search: english_search
+    chinese_search: chinese_search
+    korean_search: korean_search
     interval_slider: interval_slider
 
-    need_help_check_status: need_help_check.state
-    male_check_status: male_check.state
-    female_check_status: female_check.state
-    japanese_check_status: japanese_check.active
-    english_check_status: english_check.active
-    chinese_check_status: chinese_check.active
-    korean_check_status: korean_check.active
-    comment_input_text: comment_input.text
+    # need_help_check: need_help_check.state
+    male_check: male_check
+    female_check: female_check
+    japanese_check: japanese_check
+    english_check: english_check
+    chinese_check: chinese_check
+    korean_check: korean_check
+    comment_input: comment_input
 
     register_tab: register_tab
     TabbedPanelItem:
@@ -60,82 +64,73 @@ TabbedPanel:
                             id: let_help_check
                             text: "help you"
                             group: "mode"
-                            state: app.let_help_check_status
                         ToggleButton:
                             id: need_help_check
                             text: "help me"
                             group: "mode"
-                            state: app.need_help_check_status
 
                     MyTextInput:
                         max_characters: 10
                         multiline: False
                         id: name_input
-                        text: app.name_input_text
                     GridLayout:
                         cols: 2
                         ToggleButton:
                             id: male_check
                             text: "male"
                             group: "gender"
-                            state: app.male_check_status
                         ToggleButton:
                             id: female_check
                             text: "female"
                             group: "gender"
-                            state: app.female_check_status
 
                     GridLayout:
                         cols: 8
                         CheckBox:
                             id: japanese_check
-                            active: app.japanese_check_status
                         Image:
                             source: 'flag093.png'
                         CheckBox:
                             id: english_check
-                            active: app.english_check_status
                         Image:
                             source: 'flag198.png'
                         CheckBox:
                             id: chinese_check
-                            active: app.chinese_check_status
                         Image:
                             source: 'flag039.png'
                         CheckBox:
                             id: korean_check
-                            active: app.korean_check_status
                         Image:
                             source: 'flag099.png'
                     MyTextInput:
                         max_characters: 20
                         multiline: False
                         id: comment_input
-                        text: app.comment_input_text
                     GridLayout:
                         cols: 2
                         Slider:
                             id: interval_slider
                             min: 30
                             max: 180
-                            value: app.update_interval
+                            value: 60
+                            # value: root.update_interval
                             step: 10
-                            on_touch_move: app.update_interval_label = str(self.value)
+                            on_touch_move: root.interval_label_text = str(self.value)
                         Label:
                             size: (50, 1)
                             size_hint: (None, 1)
-                            text: app.update_interval_label
-                            on_text: interval_slider.value = int(self.text)
+                            text: root.interval_label_text
+                            # on_text: interval_slider.value = int(self.text)
             BoxLayout:
                 size_hint: (1, 0.1)
                 oriental: "vertical"
                 Button:
                     text: "REGISTER"
-                    on_release: app.name_check()
-                    on_release: app.switch_map_tab()
-                    on_release: app.current_place()
-                    # on_release: app.rest_update()
-                    # on_release: app.name_print()
+                    on_release: root.name_check()
+                    on_release: root.switch_map_tab()
+                    on_release: root.current_place()
+                    # on_release: root.rest_update()
+                    # on_release: root.name_print()
 
     TabbedPanelItem:
         text: 'map'
@@ -147,8 +142,8 @@ TabbedPanel:
                 cols: 1
                 MapView:
                     id: map_view
-                    lat: app.lat
-                    lon: app.lon
+                    lat: root.lat
+                    lon: root.lon
                     zoom: 12
                 
             GridLayout:
@@ -156,22 +151,22 @@ TabbedPanel:
                 cols: 1
                 Button:
                     text: 'CURRENT PLACE'
-                    on_release: app.current_place()
+                    on_release: root.current_place()
                     
             # GridLayout:
             #     size_hint: (1, 0.1)
             #     cols: 3
             #     Button:
             #         text: 'MARK'
-            #         on_release: app.put_marker()
+            #         on_release: root.put_marker()
                     
             #     Button:
             #         text: 'UPDATE'
-            #         on_release: app.rest_update()
+            #         on_release: root.rest_update()
                     
             #     Button:
             #         text: 'CLEAR'
-            #         on_release: app.set_status()
+            #         on_release: root.set_status()
 
     TabbedPanelItem:
         text: 'search'
@@ -198,51 +193,44 @@ TabbedPanel:
                             id: male_search
                             text: "Male"
                             group: "gender"
-                            state: app.male_search_status
                         ToggleButton:
                             id: female_search
                             text: "Female"
                             group: "gender"
-                            state: app.female_search_status
 
                     GridLayout:
                         cols: 8
                         CheckBox:
                             id: japanese_search
-                            active: app.japanese_search_status
                         Image:
                             source: 'flag093.png'
                         CheckBox:
                             id: english_search
-                            active: app.english_search_status
                         Image:
                             source: 'flag198.png'
                         CheckBox:
                             id: chinese_search
-                            active: app.chinese_search_status
                         Image:
                             source: 'flag039.png'
                         CheckBox:
                             id: korean_search
-                            active: app.korean_search_status
                         Image:
                             source: 'flag099.png'
                     GridLayout:
                         cols: 2
                         Slider:
-                            id: interval_slider
                             min: 30
                             max: 180
-                            value: app.update_interval
+                            value: root.interval_slider.value
                             step: 10
-                            on_touch_move: app.update_interval_label = str(self.value)
+                            on_touch_move: root.interval_slider.value = self.value
+                            on_touch_move: root.interval_label_text = str(self.value)
                         Label:
                             size: (50, 1)
                             size_hint: (None, 1)
-                            text: app.update_interval_label
-                            on_text: interval_slider.value = int(self.text)
+                            text: root.interval_label_text
             Button:
                 size_hint: (1, 0.1)
                 text: 'UPDATE'
-                on_release: app.change_interval()
-                on_release: app.switch_map_tab()
+                on_release: root.change_interval()
+                on_release: root.switch_map_tab()
