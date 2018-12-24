@@ -13,7 +13,10 @@ from kivy.garden.mapview import MapMarkerPopup, MapView
 from kivy.lang import Builder
 from kivy.network.urlrequest import UrlRequest
 from kivy.properties import (BooleanProperty, NumericProperty, ObjectProperty,
-                             StringProperty)
+                             StringProperty, ListProperty)
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.bubble import Bubble, BubbleContent
+from kivy.uix.image import Image as KvImage
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
@@ -292,29 +295,48 @@ class MyTabbedPanel(TabbedPanel):
                 if len(search_set & target_set) == 0:
                     continue
 
-                tmp_img = self.CARD_IMG.copy()
-                if p['japanese_status']:
-                    tmp_img.paste(self.JPN_IMG, (4, 5))
-                if p['english_status']:
-                    tmp_img.paste(self.USA_IMG, (22, 5))
-                if p['chinese_status']:
-                    tmp_img.paste(self.CHI_IMG, (40, 5))
-                if p['korean_status']:
-                    tmp_img.paste(self.KOR_IMG, (58, 5))
+                # tmp_img = self.CARD_IMG.copy()
+                # if p['japanese_status']:
+                #     tmp_img.paste(self.JPN_IMG, (4, 5))
+                # if p['english_status']:
+                #     tmp_img.paste(self.USA_IMG, (22, 5))
+                # if p['chinese_status']:
+                #     tmp_img.paste(self.CHI_IMG, (40, 5))
+                # if p['korean_status']:
+                #     tmp_img.paste(self.KOR_IMG, (58, 5))
 
-                draw = ImageDraw.Draw(tmp_img)
-                draw.text((4, 17), p['name'], fill=(0, 0, 0), font=self.FONT)
-                draw.text((4, 29), p['comment'][:10], fill=(0, 0, 0), font=self.FONT)
-                draw.text((4, 41), p['comment'][10:], fill=(0, 0, 0), font=self.FONT)
-                tmp_png = os.path.join(self.AP_DIR, "tmp_{}.png".format(i))
-                tmp_img.save(tmp_png)
+                # draw = ImageDraw.Draw(tmp_img)
+                # draw.text((4, 17), p['name'], fill=(0, 0, 0), font=self.FONT)
+                # draw.text((4, 29), p['comment'][:10], fill=(0, 0, 0), font=self.FONT)
+                # draw.text((4, 41), p['comment'][10:], fill=(0, 0, 0), font=self.FONT)
+                # tmp_png = os.path.join(self.AP_DIR, "tmp_{}.png".format(i))
+                # tmp_img.save(tmp_png)
 
-                cls = type("MyMapMarker_{}".format(i), (MapMarker,), {"source": tmp_png})
+                info_bubble = MyBubble2(orientation = 'vertical', size_hint=(None, None), size=(150, 100),
+                                japanese_status=p['japanese_status'],
+                                english_status=p['english_status'],
+                                chinese_status=p['chinese_status'],
+                                korean_status=p['korean_status'],
+                                name=p['name'], comment=p['comment'])
+                cls = type("MyMapMarker_{}".format(i), (MapMarkerPopup,),
+                            {"source": "blue_marker.png", "placeholder": info_bubble})
+                # cls = type("MyMapMarker_{}".format(i), (MapMarkerPopup,),
+                #             {"source": tmp_png, "placeholder": info_bubble})
                 self.layer.add_marker(lon=lon, lat=lat, cls=cls)
 
-        self.layer.add_marker(lat=self.lat, lon=self.lon)
+        my_bubble = MyBubble2(orientation = 'vertical', size_hint=(None, None), size=(200, 200),
+                             japanese_status=self.japanese_check.active,
+                             english_status=self.english_check.active,
+                             chinese_status=self.chinese_check.active,
+                             korean_status=self.korean_check.active,
+                             name=self.name_input.text, comment=self.comment_input.text)
+        my_popup = type("MyPopup", (MapMarkerPopup,), {"placeholder": my_bubble})
+        # my_popup.add_widget(info_bubble)
+
+        self.layer.add_marker(lat=self.lat, lon=self.lon, cls=my_popup)
 
         self.map_view.add_widget(self.layer)
+        self.layer.reposition()
         self.map_view.trigger_update(True)
 
     def current_place(self):
@@ -379,6 +401,56 @@ class MyTextInput(TextInput):
         if len(self.text) > (self.max_characters - 1) and self.max_characters > 0:
             substring = ""
         TextInput.insert_text(self, substring, from_undo)
+
+
+class MyBubble(Bubble):
+    def __init__(self, japanese_status, english_status, chinese_status, korean_status, name, comment, **kwargs):
+        self.name = name
+        self.japanese_status = japanese_status
+        self.english_status = english_status
+        self.chinese_status = chinese_status
+        self.korean_status = korean_status
+        self.comment = comment
+        super().__init__(**kwargs)
+        box = BoxLayout(size=self.size, orientation="vertical")
+        grid = GridLayout(size_hint=(1, 0.2), cols=4)
+        if self.japanese_status:
+            grid.add_widget(KvImage(source="flag093.png"))
+        if self.english_status:
+            grid.add_widget(KvImage(source="flag198.png"))
+        if self.chinese_status:
+            grid.add_widget(KvImage(source="flag039.png"))
+        if self.korean_status:
+            grid.add_widget(KvImage(source="flag099.png"))
+        label = Label(size_hint=(1, 0.8), valign="top",
+                      text=f"name: {self.name}\ncomment: {self.comment}")
+        box.add_widget(grid)
+        box.add_widget(label)
+        self.add_widget(box)
+
+class MyBubble2(Bubble):
+    japanese_img = StringProperty("blank.png")
+    english_img = StringProperty("blank.png")
+    chinese_img = StringProperty("blank.png")
+    korean_img = StringProperty("blank.png")
+    info = StringProperty("")
+    def __init__(self, japanese_status, english_status, chinese_status, korean_status, name, comment, **kwargs):
+        self.name = name
+        self.japanese_status = japanese_status
+        self.english_status = english_status
+        self.chinese_status = chinese_status
+        self.korean_status = korean_status
+        self.comment = comment
+        super().__init__(**kwargs)
+        if self.japanese_status:
+            self.japanese_img = "flag093.png"
+        if self.english_status:
+            self.english_img = "flag198.png"
+        if self.chinese_status:
+            self.chinese_img = "flag039.png"
+        if self.korean_status:
+            self.korean_img = "flag099.png"
+        self.info = f"name: {self.name}\ncomment: {self.comment}"
 
 
 if __name__ == '__main__':

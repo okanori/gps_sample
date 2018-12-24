@@ -137,21 +137,17 @@ MyTabbedPanel:
         BoxLayout:
             orientation: "vertical"
 
-            GridLayout:
+            MapView:
                 size_hint: (1, 0.9)
-                cols: 1
-                MapView:
-                    id: map_view
-                    lat: root.lat
-                    lon: root.lon
-                    zoom: 12
-                
-            GridLayout:
-                size_hint: (1, 0.1)
-                cols: 1
-                Button:
-                    text: 'CURRENT PLACE'
-                    on_release: root.current_place()
+                id: map_view
+                lat: root.lat
+                lon: root.lon
+                zoom: 12
+            
+            Button:
+                size_hint:(1, 0.1)
+                text: 'CURRENT PLACE'
+                on_release: root.current_place()
                     
             # GridLayout:
             #     size_hint: (1, 0.1)
@@ -234,3 +230,36 @@ MyTabbedPanel:
                 text: 'UPDATE'
                 on_release: root.change_interval()
                 on_release: root.switch_map_tab()
+
+<MyBubble2>:
+    # BoxLayout:
+    #     orientation: "vertical"
+    #     padding: "5dp"
+    #     GridLayout:
+    #         # size_hint: (1, 0.2)
+    #         width: root.width
+    #         height: root.height * 0.2
+    #         cols: 4
+    #         Image:
+    #             source: root.japanese_img
+    #         Image:
+    #             source: root.english_img
+    #         Image:
+    #             source: root.chinese_img
+    #         Image:
+    #             source: root.korean_img
+    BoxLayout:
+        orientation: "vertical"
+        width: root.width
+        height: root.height * 0.8
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            bar_width: 4
+            padding: "5dp"
+            Label:
+                size_hint_x: 1.0
+                size_hint_y: None
+                text_size: self.width, None  # 内部のtextureの幅を自身の幅に合わせる。高さは固定しない(None)。
+                height: self.texture_size[1] # 自身の高さを内部のtextureの高さに合わせる
+                text: root.info
