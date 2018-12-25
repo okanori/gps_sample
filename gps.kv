@@ -232,26 +232,25 @@ MyTabbedPanel:
                 on_release: root.switch_map_tab()
 
 <MyBubble2>:
-    # BoxLayout:
-    #     orientation: "vertical"
-    #     padding: "5dp"
-    #     GridLayout:
-    #         # size_hint: (1, 0.2)
-    #         width: root.width
-    #         height: root.height * 0.2
-    #         cols: 4
-    #         Image:
-    #             source: root.japanese_img
-    #         Image:
-    #             source: root.english_img
-    #         Image:
-    #             source: root.chinese_img
-    #         Image:
-    #             source: root.korean_img
+    size_hint: (None, None)
+    size: (200, 200)
     BoxLayout:
         orientation: "vertical"
-        width: root.width
-        height: root.height * 0.8
+        padding: "5dp"
+        GridLayout:
+            size_hint: (1, 0.2)
+            cols: 4
+            Image:
+                source: root.japanese_img
+            Image:
+                source: root.english_img
+            Image:
+                source: root.chinese_img
+            Image:
+                source: root.korean_img
+    BoxLayout:
+        orientation: "vertical"
+        size_hint: (1, 0.8)
         ScrollView:
             do_scroll_x: False
             do_scroll_y: True
@@ -260,6 +259,11 @@ MyTabbedPanel:
             Label:
                 size_hint_x: 1.0
                 size_hint_y: None
-                text_size: self.width, None  # 内部のtextureの幅を自身の幅に合わせる。高さは固定しない(None)。
-                height: self.texture_size[1] # 自身の高さを内部のtextureの高さに合わせる
+                text_size: self.width, None
+                height: self.texture_size[1]
                 text: root.info
+
+<MyMapMarkerPopup>:
+    lat: root.lat
+    lon: root.lon
+    MyBubble2:

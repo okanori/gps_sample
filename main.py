@@ -312,31 +312,43 @@ class MyTabbedPanel(TabbedPanel):
                 # tmp_png = os.path.join(self.AP_DIR, "tmp_{}.png".format(i))
                 # tmp_img.save(tmp_png)
 
-                info_bubble = MyBubble2(orientation = 'vertical', size_hint=(None, None), size=(150, 100),
-                                japanese_status=p['japanese_status'],
-                                english_status=p['english_status'],
-                                chinese_status=p['chinese_status'],
-                                korean_status=p['korean_status'],
-                                name=p['name'], comment=p['comment'])
-                cls = type("MyMapMarker_{}".format(i), (MapMarkerPopup,),
-                            {"source": "blue_marker.png", "placeholder": info_bubble})
+
+                # info_marker = MapMarkerPopup(lon=lon, lat=lat, source="blue_marker.png")
+                # info_bubble = MyBubble2(orientation = 'vertical', size_hint=(None, None), size=(200, 200),
+                #                 japanese_status=p['japanese_status'],
+                #                 english_status=p['english_status'],
+                #                 chinese_status=p['chinese_status'],
+                #                 korean_status=p['korean_status'],
+                #                 name=p['name'], comment=p['comment'])
+                # info_marker.add_widget(info_bubble)
+                # self.map_view.add_marker(info_marker)
+                cls = type("MyMapMarkerPopup_{}".format(i), (MyMapMarkerPopup,),
+                           {"source": "blue_marker.png", "lat": lat, "lon": lon,
+                            "name": p["name"], "comment": p["comment"],
+                            "japanese_status": p["japanese_status"],
+                            "english_status": p["english_status"],
+                            "chinese_status": p["chinese_status"],
+                            "korean_status": p["korean_status"]})
+                # cls = type("MyMapMarker_{}".format(i), (MapMarkerPopup,),
+                #             {"source": "blue_marker.png", "placeholder": info_bubble})
                 # cls = type("MyMapMarker_{}".format(i), (MapMarkerPopup,),
                 #             {"source": tmp_png, "placeholder": info_bubble})
                 self.layer.add_marker(lon=lon, lat=lat, cls=cls)
 
-        my_bubble = MyBubble2(orientation = 'vertical', size_hint=(None, None), size=(200, 200),
+        my_bubble = MyBubble2(orientation = 'vertical', size_hint=(None, None), size=(100, 100),
                              japanese_status=self.japanese_check.active,
                              english_status=self.english_check.active,
                              chinese_status=self.chinese_check.active,
                              korean_status=self.korean_check.active,
                              name=self.name_input.text, comment=self.comment_input.text)
-        my_popup = type("MyPopup", (MapMarkerPopup,), {"placeholder": my_bubble})
+        # my_popup = type("MyPopup", (MapMarkerPopup,), {"placeholder": my_bubble})
         # my_popup.add_widget(info_bubble)
-
-        self.layer.add_marker(lat=self.lat, lon=self.lon, cls=my_popup)
+        my_marker = MapMarkerPopup(lat=self.lat, lon=self.lon)
+        my_marker.add_widget(my_bubble)
+        # self.layer.add_marker(lat=self.lat, lon=self.lon, cls=my_popup)
 
         self.map_view.add_widget(self.layer)
-        self.layer.reposition()
+        self.map_view.add_marker(my_marker)
         self.map_view.trigger_update(True)
 
     def current_place(self):
@@ -452,6 +464,35 @@ class MyBubble2(Bubble):
             self.korean_img = "flag099.png"
         self.info = f"name: {self.name}\ncomment: {self.comment}"
 
+
+class MyMapMarkerPopup(MapMarkerPopup):
+    lat = NumericProperty()
+    lon = NumericProperty()
+    japanese_img = StringProperty("blank.png")
+    english_img = StringProperty("blank.png")
+    chinese_img = StringProperty("blank.png")
+    korean_img = StringProperty("blank.png")
+    info = StringProperty("")
+    def __init__(self, lat, lon, japanese_status, english_status, chinese_status, korean_status, name, comment, **kwargs):
+        self.lat = lat
+        self.lon = lon
+        self.name = name
+        self.japanese_status = japanese_status
+        self.english_status = english_status
+        self.chinese_status = chinese_status
+        self.korean_status = korean_status
+        self.comment = comment
+        super().__init__(**kwargs)
+        if self.japanese_status:
+            self.japanese_img = "flag093.png"
+        if self.english_status:
+            self.english_img = "flag198.png"
+        if self.chinese_status:
+            self.chinese_img = "flag039.png"
+        if self.korean_status:
+            self.korean_img = "flag099.png"
+        self.info = f"name: {self.name}\ncomment: {self.comment}"
+    
 
 if __name__ == '__main__':
     GpsApp().run()
